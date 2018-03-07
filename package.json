@@ -1,0 +1,23 @@
+{
+  "name": "slackapp-v2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/client": "^3.16.0",
+    "@slack/events-api": "^1.0.1",
+    "axios": "^0.16.0",
+    "body-parser": "^1.17.1",
+    "debug": "^3.1.0",
+    "dotenv": "^4.0.0",
+    "express": "^4.15.2",
+    "lowdb": "^1.0.0",
+    "request": "^2.83.0"
+  }
+}
