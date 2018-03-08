@@ -61,6 +61,8 @@ app.use('/events', slackEvents.expressMiddleware());
 // Attach listeners to events by Slack Event "type". See: https://api.slack.com/events/message.im
 // console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`);
 slackEvents.on('message', async (event)=> {
+  // console.log('received event');
+  // console.log(event);
   // build message object
   let messageObject = {}
 
@@ -81,35 +83,46 @@ slackEvents.on('message', async (event)=> {
   messageObject.user_real_name = user.real_name
 
   // Get the correct channel name
-  const channels = await axios.get('https://slack.com/api/channels.list', {
+  // Get public channels
+  let publicChannels = await axios.get('https://slack.com/api/channels.list', {
     params: {
       token: ACCESS_TOKEN
     }
   }).then(response => response.data.channels)
 
-  const channel = channels.find(channel => channel.id == event.channel)
-  messageObject.channel_id = channel.id
-  messageObject.channel_real_name = channel.name
+  // Get private channels
+  let privateChannels = await axios.get('https://slack.com/api/groups.list', {
+    params: {
+      token: ACCESS_TOKEN
+    }
+  }).then(response => response.data.groups)
+
+  let foundPublicChannel = publicChannels.find(channel => channel.id == event.channel)
+  if (foundPublicChannel) {
+    messageObject.channel_id = foundPublicChannel.id
+    messageObject.channel_real_name = foundPublicChannel.name
+  }
+
+  let foundPrivateChannel = privateChannels.find(channel => channel.id == event.channel)
+  if (foundPrivateChannel) {
+    messageObject.channel_id = foundPrivateChannel.id
+    messageObject.channel_real_name = foundPrivateChannel.name
+  }
 
   // Save to database
   saveMessage(messageObject)
 });
 
-const low = require('lowdb')
-const FileSync = require('lowdb/adapters/FileSync')
-
-const adapter = new FileSync('db.json')
-const db = low(adapter)
+const Database = require('./database')
+const myDB = new Database()
 
 function saveMessage(messageObject) {
-  // Set some defaults
-  db.defaults({ messages: {} })
-    .write()
-
-  // Add a post
-  db.get('messages')
-  .push(messageObject)
-  .write()
+  console.log('saving message: ', messageObject);
+  myDB.insertMessage(messageObject, err => {
+    if (err) {
+      console.error(err);
+    }
+  })
 }
 
 // Handle errors (see `errorCodes` export)
